@@ -12,19 +12,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // 服务器端私钥（与前端公钥对应）
 const PRIVATE_KEY = `-----BEGIN RSA PRIVATE KEY-----
-MIICXAIBAAKBgHnNRy4sakMS2votKzdPQwUqLMfmeqjyD6y+BDZzY4dj8NzctYYy
-l3xL1GQ4ColVcEyDqiHYw85SKtzPh9koqdN8ieQFAqheGuU4BEzUMs/5I4lIZCps
-K6SummjcZKEwf3wS4aO5yHCWX7J/IvdwdWrC809rfAZO14OtjWTQIcQtAgMBAAEC
-gYBExVW6SVOaGWxQMu6ipPsXUG/GUmjRORMGmqbwQ4hfqlsVqPxJEAmeIYaDK20v
-i3EDkped0rEDrjsLP5XZU+9Gc38K1XjQVP4itFvQikfzVKStU12iIiA3am+5we/O
-cFni0HP0F8/OZktRHOin5F/WRLeJuajI4OudyDfEwBHBlQJBAMlBqOzGv5s+OeSP
-9FMKYAo2XSXPQk2vqoslHmrUeMymGV27wYHzgx6e6+P7mtV4S9qhHx21xKjl90ix
-HzPkObsCQQCa7ttx3uZx4uQUrj0+2x7Pu0U/mPikS/eE038p8LxGmJnWcNOS1GEt
-N3NUBxiMoMw3KDZCV38pUBU59nqXm8c3AkAjIxWNET4OqpSM9R0hCmSuI8OrgD4B
-NjQ+SuK+oA3fHPi8xrUILS2tQO3KRflIX9JOf2bhVwTYwB2mUVYzRxtVAkEAiBAq
-0lcSBIRhD7RxfwkKhx6M0yxxeEBq8NCYxelwP4N23veZJ0Ky0PX4p5vPuHjiv7Hl
-7N9QgqSc75mB0jFxgwJBALF0Rcx8Nifaq6HFXhesTU9fvBGd0VCp0Iyx557++vLX
-P3Jag7mdoZ4U3Me59RrEsYtr324P9/2YQiBJf+5cI2Q=
+MIICXQIBAAKBgQCFVqa0S89jMU2TtFwJoA7ZsOXmT9d/5+IbqxB2gydx8HVkrtA7
+JfPElnnU9gGwxiTreWjkDTx8sYEC4K0wGHkzowh1fOdv747n3pNyun5D4BgiLwV+
+YT6opRs9D/MNjuXSLGJJ5h8BkHJjBVqykK8LyREvMXXiB62VWC88fKwMUQIDAQAB
+AoGAFaGhGc7SrjzpYPT5mXYl8psIMPzy8QUlYWe3HALa+1kPMm5Jyc62ZUYkLbBb
+RdpfUvQ3WAftsCz7yQO6FPtjbgdf/9iOienYgAL2kxn6D3yjzMGxQ2zIzPkYA89/
+cKgZfv6NC2of2wOaiIzgRRgxkbDOIVAFlZoEaBIeaFHT66ECQQDryQIRzzbZ0zkm
+9enisu6/QUG5pIPdNicNk3wbcmCempkAgML9YqhgOihm11rEWClgP8HHAtnQj3zy
+TL/ZYlVLAkEAkMUm7rJ0+3pWaUAoUvNdDqdDuKcp8uJS7kjW7RrFzGnfaBNeq5g0
+HvE+GcYjAevufNsB+ZjYEYHTR98nTIEPUwJBAMee5YaodZrTblai6kIJFYKMwBVo
+yE83sraWwAMIwe5lmtXHLc6SgVT+yAfRmcITlewr7mYL7tbZNIJ7Ig3sZ6MCQBf3
+q+Rkwx1HObsfFg31oHhmlL2jXzyI37X3dS23+vtGo+f1HP1Hq4lb4y4dMXqF9uvQ
+zljmRw9O8Q27EiSGUWUCQQCfw5ZgH0yA0wsugeJoXer+JFUAztwdJydN6XHvpTjB
+1oBaJfM/CewngIvz8mYwoYV29xKRfmi3teuBgHo1L7yG
 -----END RSA PRIVATE KEY-----`;
 
 // 预设的校验哈希值（在实际应用中应该动态生成）
@@ -42,7 +42,6 @@ function verifyProofOfWork(encryptedData, ipAddress, difficulty) {
         
         // 解析解密后的数据
         const parts = decrypted.split(',');
-        console.log('解密后的数据部分:', parts);
         if (parts.length !== 4) {
             return { valid: false, reason: '数据格式无效' };
         }
