@@ -56,9 +56,28 @@ function calculateProofOfWork(ipaddress, previousHash, difficulty, publicString)
 // 使用公钥加密数据的函数
 function encryptWithPublicKey(data, publicKeyString) {
     try {
+        // 确保数据不超过RSA密钥允许的长度（密钥长度/8 - 11）
+        // 假设使用的是1024位的密钥，最大消息长度约为117字节
+        if (data.length > 117) {
+            console.warn('数据长度过长，可能会导致加密失败。当前长度: ' + data.length);
+        }
+        
+        // 创建JSEncrypt实例并配置
         var encrypt = new JSEncrypt();
         encrypt.setPublicKey(publicKeyString);
+        
+        // 在控制台输出加密前的数据（方便调试）
+        console.log('加密前数据:', data);
+        console.log('加密前数据长度:', data.length);
+        
+        // 执行加密
         var encrypted = encrypt.encrypt(data);
+        
+        if (!encrypted) {
+            throw new Error('加密结果为空，可能是数据太长或密钥配置问题');
+        }
+        
+        console.log('加密后数据长度:', encrypted.length);
         return encrypted;
     } catch (e) {
         console.error('加密错误:', e);

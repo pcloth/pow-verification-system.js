@@ -33,12 +33,19 @@ const PREVIOUS_HASH = '000000000000000000000000000000000000000000000000000000000
 // 验证工作量证明的函数
 function verifyProofOfWork(encryptedData, ipAddress, difficulty) {
     try {
-        // 创建RSA密钥对象
+        // 创建RSA密钥对象并设置兼容JSEncrypt的配置
         const key = new NodeRSA();
         key.importKey(PRIVATE_KEY, 'private');
+        key.setOptions({
+            encryptionScheme: 'pkcs1',  // 使用PKCS#1 v1.5填充
+            environment: 'browser',     // 设置为浏览器环境兼容模式
+            signingScheme: 'pkcs1-sha256' // 签名方案与JSEncrypt一致
+        });
         
         // 解密数据
+        console.log('开始解密数据...');
         const decrypted = key.decrypt(encryptedData, 'utf8');
+        console.log('数据解密成功:', decrypted);
         
         // 解析解密后的数据
         const parts = decrypted.split(',');
@@ -52,8 +59,15 @@ function verifyProofOfWork(encryptedData, ipAddress, difficulty) {
         const nonce = parseInt(parts[3], 10);
         
         // 验证IP地址
-        if (decryptedIp !== ipAddress) {
-            return { valid: false, reason: 'IP地址不匹配' };
+        // 处理本地IP的不同表示形式：127.0.0.1和::1
+        const isLocalDecryptedIp = decryptedIp === '127.0.0.1' || decryptedIp === 'localhost';
+        const isLocalServerIp = ipAddress === '127.0.0.1' || ipAddress === '::1' || ipAddress === 'localhost';
+        
+        console.log('解密的IP:', decryptedIp, '服务器检测到的IP:', ipAddress);
+        
+        if (decryptedIp !== ipAddress && !(isLocalDecryptedIp && isLocalServerIp)) {
+            console.log('IP地址不匹配:', decryptedIp, ipAddress);
+            return { valid: false, reason: `IP地址不匹配: 预期 ${decryptedIp}, 实际 ${ipAddress}` };
         }
         
         // 验证哈希前缀是否符合难度要求
@@ -87,6 +101,11 @@ function verifyProofOfWork(encryptedData, ipAddress, difficulty) {
         };
     } catch (e) {
         console.error('验证错误:', e);
+        // 提供更详细的错误信息
+        console.error('错误类型:', e.constructor.name);
+        console.error('错误堆栈:', e.stack);
+        console.error('加密数据长度:', encryptedData ? encryptedData.length : 'undefined');
+        
         return { valid: false, reason: '验证错误: ' + e.message };
     }
 }
@@ -94,7 +113,27 @@ function verifyProofOfWork(encryptedData, ipAddress, difficulty) {
 // 验证接口
 app.post('/verify', (req, res) => {
     const { encrypted, next, stats } = req.body;
-    const clientIp = req.ip || req.connection.remoteAddress || '127.0.0.1';
+    
+// 获取客户端IP，处理各种格式的情况
+let clientIp = req.ip || req.connection.remoteAddress || '127.0.0.1';
+console.log('原始客户端IP:', clientIp);
+
+// 如果是IPv6格式的本地回环地址（::1），转换为IPv4格式（127.0.0.1）
+if (clientIp === '::1') {
+    clientIp = '127.0.0.1';
+}
+// 处理 IPv4-mapped IPv6 地址格式（::ffff:x.x.x.x）
+else if (clientIp.startsWith('::ffff:')) {
+    clientIp = clientIp.substring(7); // 去掉 ::ffff: 前缀
+}
+// 如果IP地址包含端口号，去掉端口号部分
+if (clientIp.includes(':')) {
+    const lastColonIndex = clientIp.lastIndexOf(':');
+    // 确保不是IPv6地址的一部分（IPv6地址中有多个冒号）
+    if (clientIp.indexOf(':') === lastColonIndex) {
+        clientIp = clientIp.substring(0, lastColonIndex);
+    }
+}    console.log('收到验证请求，客户端IP:', clientIp);
     
     // 解析统计数据（如有）
     let statsData = {};
@@ -180,7 +219,45 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// 测试密钥对
+function testKeyPair() {
+    try {
+        console.log('测试RSA密钥对...');
+        
+        // 从私钥中提取公钥
+        const key = new NodeRSA();
+        key.importKey(PRIVATE_KEY, 'private');
+        key.setOptions({
+            encryptionScheme: 'pkcs1',
+            environment: 'browser',
+            signingScheme: 'pkcs1-sha256'
+        });
+        
+        // 测试文本
+        const testMessage = 'Hello, World!';
+        
+        // 使用公钥加密
+        const encrypted = key.encrypt(testMessage, 'base64');
+        console.log('加密测试消息:', encrypted);
+        
+        // 使用私钥解密
+        const decrypted = key.decrypt(encrypted, 'utf8');
+        console.log('解密测试消息:', decrypted);
+        
+        if (testMessage === decrypted) {
+            console.log('✅ 密钥对测试成功');
+        } else {
+            console.error('❌ 密钥对测试失败: 解密结果与原始消息不匹配');
+        }
+    } catch (e) {
+        console.error('❌ 密钥对测试失败:', e);
+    }
+}
+
 // 启动服务器
 app.listen(port, () => {
     console.log(`服务器运行在 http://localhost:${port}`);
+    
+    // 测试密钥对
+    testKeyPair();
 });
