@@ -21,4 +21,4 @@ http://127.0.0.1:3000?next=/text
 
 
 # 你也可以查看工作原理简单demo
-(点击查看)[./docs/example.html]
+[点击查看](./docs/example.html)
