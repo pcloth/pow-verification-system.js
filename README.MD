@@ -1,5 +1,7 @@
 # 这是一个工作量证明系统的demo
 
+## 使用区块链原理开发的简易工作量证明系统
+
 1、前端一个前置页面，用于工作量没有x-sign的页面请求停留；
 
 2、在停留页面由后端渲染一个当前用户ip地址和后端用的今日起始区块和公钥字符串等信息
@@ -22,3 +24,9 @@ http://127.0.0.1:3000?next=/text
 
 # 你也可以查看工作原理简单demo
 [点击查看](./docs/example.html)
+
+```
+git clone https://github.com/pcloth/pow-verification-system.js.git
+```
+
+然后直接浏览器打开docs/example.html查看精简版例子
