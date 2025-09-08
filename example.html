@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>工作量证明演示</title>
+    <!-- 引入必要的库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
+    <script src="workProof.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .performance {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 4px;
+        }
+        .performance h3 {
+            margin-top: 5px;
+            color: #0050b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>工作量证明演示</h1>
+        
+        <h2>输入参数</h2>
+        <div>
+            <label for="ipaddress">IP地址：</label>
+            <input type="text" id="ipaddress" value="192.168.1.1" />
+        </div>
+        <div>
+            <label for="previousHash">校验哈希：</label>
+            <input type="text" id="previousHash" value="0000000000000000000000000000000000000000000000000000000000000000" />
+        </div>
+        <div>
+            <label for="difficulty">难度 (1-8)：</label>
+            <input type="number" id="difficulty" value="4" min="1" max="8" />
+        </div>
+        
+        <h2>密钥（测试用生成）</h2>
+        <div>
+            <label for="publicKey">公钥：</label>
+            <textarea id="publicKey" readonly></textarea>
+        </div>
+        <div>
+            <label for="privateKey">私钥：</label>
+            <textarea id="privateKey" readonly></textarea>
+        </div>
+        
+        <div>
+            <button id="generateKeys">生成新密钥</button>
+            <button id="calculatePow">计算工作量证明</button>
+        </div>
+        
+        <h2>结果</h2>
+        <div class="result" id="results">尚未执行计算。</div>
+        <div class="performance" id="performanceResults" style="display:none;">
+            <h3>性能指标</h3>
+            <div id="performanceDetails"></div>
+        </div>
+        
+        <h2>验证</h2>
+        <div>
+            <button id="verifyPow">验证工作量证明</button>
+        </div>
+        <div class="result" id="verificationResults">尚未执行验证。</div>
+        <div class="performance" id="verifyPerformanceResults" style="display:none;">
+            <h3>验证性能指标</h3>
+            <div id="verifyPerformanceDetails"></div>
+        </div>
+        
+        <script>
+            // 初始化变量存储结果
+            var powResults = null;
+            
+            // 页面加载时生成密钥对
+            window.onload = function() {
+                generateNewKeyPair();
+                
+                // 为按钮添加事件监听器
+                document.getElementById('generateKeys').onclick = generateNewKeyPair;
+                document.getElementById('calculatePow').onclick = runProofOfWork;
+                document.getElementById('verifyPow').onclick = verifyProofOfWork;
+            };
+            
+            function generateNewKeyPair() {
+                var keyGenStartTime = new Date().getTime();
+                var crypt = new JSEncrypt({default_key_size: 1024}); // 使用较小的密钥用于演示
+                crypt.getKey();
+                
+                document.getElementById('publicKey').value = crypt.getPublicKey();
+                document.getElementById('privateKey').value = crypt.getPrivateKey();
+                
+                var keyGenTime = new Date().getTime() - keyGenStartTime;
+                console.log('密钥生成耗时: ' + keyGenTime + 'ms');
+            }
+            
+            function runProofOfWork() {
+                var ipaddress = document.getElementById('ipaddress').value;
+                var previousHash = document.getElementById('previousHash').value;
+                var difficulty = parseInt(document.getElementById('difficulty').value, 10);
+                var publicKey = document.getElementById('publicKey').value;
+                
+                if (!ipaddress || !previousHash || isNaN(difficulty) || !publicKey) {
+                    alert('请填写所有字段，如有需要请生成密钥。');
+                    return;
+                }
+                
+                // 更新UI显示计算正在进行中
+                var resultsDiv = document.getElementById('results');
+                var performanceDiv = document.getElementById('performanceResults');
+                var performanceDetailsDiv = document.getElementById('performanceDetails');
+                
+                resultsDiv.innerHTML = '正在计算工作量证明...';
+                performanceDiv.style.display = 'none';
+                
+                // 使用setTimeout允许UI更新后再进行繁重计算
+                setTimeout(function() {
+                    try {
+                        var startTime = new Date().getTime();
+                        powResults = calculateProofOfWork(ipaddress, previousHash, difficulty, publicKey);
+                        
+                        resultsDiv.innerHTML = '工作量证明计算完成\n\n' +
+                            'Nonce值: ' + powResults.nonce + '\n' +
+                            '哈希值: ' + powResults.hash + '\n' +
+                            '时间戳: ' + powResults.timestamp + '\n\n' +
+                            '加密数据:\n' + powResults.encrypted;
+                        
+                        // 显示性能指标
+                        performanceDetailsDiv.innerHTML = 
+                            '哈希计算耗时: ' + powResults.hashingTime + 'ms (' + powResults.nonce + '次尝试)\n' +
+                            '数据加密耗时: ' + powResults.encryptTime + 'ms\n' +
+                            '总计算耗时: ' + powResults.totalTime + 'ms\n' +
+                            '平均每次哈希计算: ' + (powResults.hashingTime / powResults.nonce).toFixed(3) + 'ms';
+                        
+                        performanceDiv.style.display = 'block';
+                    } catch (e) {
+                        resultsDiv.innerHTML = '错误: ' + e.message;
+                    }
+                }, 100);
+            }
+            
+            function verifyProofOfWork() {
+                if (!powResults) {
+                    alert('请先计算工作量证明。');
+                    return;
+                }
+                
+                var privateKey = document.getElementById('privateKey').value;
+                var ipaddress = document.getElementById('ipaddress').value;
+                var previousHash = document.getElementById('previousHash').value;
+                var difficulty = parseInt(document.getElementById('difficulty').value, 10);
+                
+                var verificationDiv = document.getElementById('verificationResults');
+                var verifyPerformanceDiv = document.getElementById('verifyPerformanceResults');
+                var verifyPerformanceDetailsDiv = document.getElementById('verifyPerformanceDetails');
+                
+                verificationDiv.innerHTML = '正在验证...';
+                verifyPerformanceDiv.style.display = 'none';
+                
+                setTimeout(function() {
+                    try {
+                        var verifyStartTime = new Date().getTime();
+                        var result = decryptAndVerify(
+                            powResults.encrypted,
+                            privateKey,
+                            ipaddress,
+                            previousHash,
+                            difficulty
+                        );
+                        var verifyTotalTime = new Date().getTime() - verifyStartTime;
+                        
+                        if (result.valid) {
+                            verificationDiv.innerHTML = '验证成功！\n\n' +
+                                'IP: ' + result.ip + '\n' +
+                                '哈希: ' + result.hash + '\n' +
+                                '时间戳: ' + result.timestamp + '\n' +
+                                'Nonce: ' + result.nonce;
+                                
+                            // 显示验证性能指标
+                            verifyPerformanceDetailsDiv.innerHTML = 
+                                '数据解密耗时: ' + result.decryptTime + 'ms\n' +
+                                '哈希验证耗时: ' + result.verifyHashTime + 'ms\n' +
+                                '总验证耗时: ' + result.totalTime + 'ms';
+                        } else {
+                            verificationDiv.innerHTML = '验证失败: ' + result.reason;
+                            
+                            // 即使验证失败也显示已有的性能数据
+                            verifyPerformanceDetailsDiv.innerHTML = 
+                                '数据解密耗时: ' + (result.decryptTime || 'N/A') + 'ms\n' +
+                                '哈希验证耗时: ' + (result.verifyHashTime || 'N/A') + 'ms\n' +
+                                '总验证耗时: ' + verifyTotalTime + 'ms';
+                        }
+                        
+                        verifyPerformanceDiv.style.display = 'block';
+                    } catch (e) {
+                        verificationDiv.innerHTML = '验证错误: ' + e.message;
+                    }
+                }, 100);
+            }
+        </script>
+    </div>
+</body>
+</html>
