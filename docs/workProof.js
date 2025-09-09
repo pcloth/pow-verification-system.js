@@ -33,113 +33,65 @@ function calculateProofOfWork(ipaddress, previousHash, difficulty, publicString)
     var timestamp = new Date().getTime();
     var payload = ipaddress + ',' + hash + ',' + timestamp + ',' + (nonce - 1);
     
-    // 记录加密开始时间
-    var encryptStartTime = new Date().getTime();
-    
-    // 使用公钥加密数据
-    var encrypted = encryptWithPublicKey(payload, publicString);
-    
-    var encryptTime = new Date().getTime() - encryptStartTime;
     var totalTime = new Date().getTime() - startTime;
-    
+    // 直接返回明文payload，不加密
     return {
         nonce: nonce - 1,
         hash: hash,
-        encrypted: encrypted,
+        payload: payload,
         timestamp: timestamp,
         hashingTime: hashingTime,
-        encryptTime: encryptTime,
         totalTime: totalTime
     };
 }
 
-// 使用公钥加密数据的函数
-function encryptWithPublicKey(data, publicKeyString) {
-    try {
-        var encrypt = new JSEncrypt();
-        encrypt.setPublicKey(publicKeyString);
-        var encrypted = encrypt.encrypt(data);
-        return encrypted;
-    } catch (e) {
-        console.error('加密错误:', e);
-        throw new Error('数据加密失败: ' + e.message);
-    }
-}
 
-// 使用私钥解密并验证数据的函数
-function decryptAndVerify(encryptedData, privateKeyString, ipaddress, previousHash, difficulty) {
+
+// 明文验证数据的函数
+function decryptAndVerify(payload, ipaddress, previousHash, difficulty) {
     try {
         var startTime = new Date().getTime();
-        
-        // 解密数据
-        var decryptStartTime = new Date().getTime();
-        var decrypt = new JSEncrypt();
-        decrypt.setPrivateKey(privateKeyString);
-        var decrypted = decrypt.decrypt(encryptedData);
-        var decryptTime = new Date().getTime() - decryptStartTime;
-        
-        if (!decrypted) {
-            return {
-                valid: false,
-                reason: '数据解密失败',
-                decryptTime: decryptTime
-            };
-        }
-        
-        // 解析解密后的数据
-        var parts = decrypted.split(',');
+        // 直接解析明文payload
+        var parts = payload.split(',');
         if (parts.length !== 4) {
             return {
                 valid: false,
-                reason: '数据格式无效',
-                decryptTime: decryptTime
+                reason: '数据格式无效'
             };
         }
-        
         var decryptedIp = parts[0];
         var hash = parts[1];
         var timestamp = parts[2];
         var nonce = parseInt(parts[3], 10);
-        
         // 验证IP地址
         if (decryptedIp !== ipaddress) {
             return {
                 valid: false,
-                reason: 'IP地址不匹配',
-                decryptTime: decryptTime
+                reason: 'IP地址不匹配'
             };
         }
-        
         // 验证哈希前缀是否符合难度要求
         var prefix = '';
         for (var i = 0; i < difficulty; i++) {
             prefix += '0';
         }
-        
         if (hash.substring(0, difficulty) !== prefix) {
             return {
                 valid: false,
-                reason: '哈希不符合难度要求',
-                decryptTime: decryptTime
+                reason: '哈希不符合难度要求'
             };
         }
-        
-        // 记录哈希验证开始时间
+        // 验证哈希是否有效
         var verifyHashStartTime = new Date().getTime();
-        
-        // 直接验证哈希是否有效，使用客户端提供的nonce
         var calculatedHash = CryptoJS.SHA256(ipaddress + previousHash + nonce).toString();
         var verifyHashTime = new Date().getTime() - verifyHashStartTime;
-        
         if (calculatedHash !== hash) {
             return {
                 valid: false,
                 reason: '哈希验证失败',
-                decryptTime: decryptTime,
                 verifyHashTime: verifyHashTime
             };
         }
-        
         // 可选：验证时间戳是否在合理范围内
         var currentTime = new Date().getTime();
         var timeDiff = currentTime - parseInt(timestamp, 10);
@@ -147,20 +99,16 @@ function decryptAndVerify(encryptedData, privateKeyString, ipaddress, previousHa
             return {
                 valid: false,
                 reason: '工作量证明已过期',
-                decryptTime: decryptTime,
                 verifyHashTime: verifyHashTime
             };
         }
-        
         var totalTime = new Date().getTime() - startTime;
-        
         return {
             valid: true,
             ip: decryptedIp,
             hash: hash,
             timestamp: timestamp,
             nonce: nonce,
-            decryptTime: decryptTime,
             verifyHashTime: verifyHashTime,
             totalTime: totalTime
         };
