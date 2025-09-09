@@ -4,20 +4,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const nextUrl = urlParams.get('next') || '/'; // 默认跳转到根目录
     const difficulty = parseInt(urlParams.get('difficulty') || '4', 10); // 默认难度为4
     
-    // 获取客户端IP (在实际环境中应该从服务器获取)
-    // 这里仅作为示例，使用一个固定值
-    const ipAddress = '127.0.0.1'; 
+    // 使用服务器注入的客户端IP和previousHash
+    // 这些变量在index.html中被服务器替换为实际值
+    const ipAddress = CLIENT_IP; 
+    const previousHash = PREVIOUS_HASH;
     
-    // 服务器预设的校验哈希和公钥
-    // 这些值在实际应用中应该由服务器动态生成并传入
-    const previousHash = '0000000000000000000000000000000000000000000000000000000000000000';
-    const publicKey = `-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCFVqa0S89jMU2TtFwJoA7ZsOXm
-T9d/5+IbqxB2gydx8HVkrtA7JfPElnnU9gGwxiTreWjkDTx8sYEC4K0wGHkzowh1
-fOdv747n3pNyun5D4BgiLwV+YT6opRs9D/MNjuXSLGJJ5h8BkHJjBVqykK8LyREv
-MXXiB62VWC88fKwMUQIDAQAB
------END PUBLIC KEY-----`;
-
+    console.log('客户端IP:', ipAddress);
+    console.log('Previous Hash:', previousHash);
+    
     // 设置表单中的next参数
     document.getElementById('next').value = nextUrl;
 
@@ -44,18 +38,18 @@ MXXiB62VWC88fKwMUQIDAQAB
             
             // 计算开始
             const startTime = new Date().getTime();
-            const powResult = calculateProofOfWork(ipAddress, previousHash, difficulty, publicKey);
+            const powResult = calculateProofOfWork(ipAddress, previousHash, difficulty);
             const totalTime = new Date().getTime() - startTime;
             
             updateProgress(85);
 
             // 准备提交数据
-            document.getElementById('encrypted').value = powResult.encrypted;
+            document.getElementById('hash').value = powResult.hash;
+            document.getElementById('nonce').value = powResult.nonce;
             
             // 添加统计数据
             const stats = {
                 hashingTime: powResult.hashingTime,
-                encryptTime: powResult.encryptTime,
                 totalTime: powResult.totalTime,
                 nonce: powResult.nonce,
                 difficulty: difficulty

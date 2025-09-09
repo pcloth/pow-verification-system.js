@@ -169,7 +169,7 @@
                 setTimeout(function() {
                     try {
                         var verifyStartTime = new Date().getTime();
-                        var result = decryptAndVerify(
+                        var result = verifyProofOfWork(
                             powResults.payload,
                             ipaddress,
                             previousHash,

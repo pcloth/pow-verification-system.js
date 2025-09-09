@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="styles.css">
     <!-- 引入必要的库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.0.0-rc.1/jsencrypt.min.js"></script>
 </head>
 <body>
     <div class="loading-container">
@@ -21,12 +20,20 @@
     </div>
 
     <!-- 隐藏的表单，用于提交数据 -->
-    <form id="powForm" method="post" action="/verify" style="display: none;">
-        <input type="hidden" id="encrypted" name="encrypted">
+    <form id="powForm" method="post" action="/verify" style="display:none;">
+        <input type="hidden" id="hash" name="hash">
+        <input type="hidden" id="nonce" name="nonce">
         <input type="hidden" id="next" name="next">
         <input type="hidden" id="stats" name="stats">
     </form>
 
+    <!-- 服务器注入的客户端IP和previousHash -->
+    <script>
+        // 这些变量将由服务器动态替换
+        const CLIENT_IP = '{{CLIENT_IP}}';
+        const PREVIOUS_HASH = '{{PREVIOUS_HASH}}';
+    </script>
+    
     <script src="workProof.js"></script>
     <script src="loading.js"></script>
 </body>

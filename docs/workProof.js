@@ -1,10 +1,9 @@
 /**
- * 工作量证明实现与加密
- * 兼容IE11版本
+ * 工作量证明实现
  */
 
 // 工作量证明函数
-function calculateProofOfWork(ipaddress, previousHash, difficulty, publicString) {
+function calculateProofOfWork(ipaddress, previousHash, difficulty) {
     var nonce = 1;
     var hash = '';
     var prefix = '';
@@ -29,12 +28,12 @@ function calculateProofOfWork(ipaddress, previousHash, difficulty, publicString)
     var hashingTime = new Date().getTime() - startTime;
     console.log('经过 ' + (nonce - 1) + ' 次尝试后找到有效哈希，计算耗时: ' + hashingTime + 'ms');
     
-    // 创建要加密的数据
+    // 创建要发送的数据
     var timestamp = new Date().getTime();
     var payload = ipaddress + ',' + hash + ',' + timestamp + ',' + (nonce - 1);
     
     var totalTime = new Date().getTime() - startTime;
-    // 直接返回明文payload，不加密
+    
     return {
         nonce: nonce - 1,
         hash: hash,
@@ -46,9 +45,8 @@ function calculateProofOfWork(ipaddress, previousHash, difficulty, publicString)
 }
 
 
-
-// 明文验证数据的函数
-function decryptAndVerify(payload, ipaddress, previousHash, difficulty) {
+// 验证数据的函数
+function verifyProofOfWork(payload, ipaddress, previousHash, difficulty) {
     try {
         var startTime = new Date().getTime();
         // 直接解析明文payload
