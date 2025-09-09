@@ -10,7 +10,7 @@
 
 4、这样访问者需要消耗比服务器多几万倍到100万倍的计算量，从而抵御DDoS攻击
 
-# 简单例子
+## 简单例子说明工作原理
 [点击查看](./docs/example.html)
 
 ![例子图片](./public/exp.png)
@@ -22,14 +22,13 @@ pnpm install
 pnpm dev
 ```
 
-## 浏览器访问
+### 浏览器访问
 http://127.0.0.1:3000
 
 这个时候你将看到会自动跳转到一个loading开始计算，验证成功后会自动返回到首页
 
+### 验证中
+![验证中](./public/loading.png)
 
-```
-git clone https://github.com/pcloth/pow-verification-system.js.git
-```
-
-然后直接浏览器打开docs/example.html查看精简版例子
+### 验证成功
+![验证成功](./public/pass.png)
